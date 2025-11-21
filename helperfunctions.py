@@ -60,6 +60,7 @@ gamma = 6 * np.pi * R * eta  # Drag coefficient of the medium.
 rho = 2.e+3  # Density of the particle [kg/m^3]
 m = 4 * np.pi / 3 * rho * R ** 3  # Mass of the particle [kg].
 
+
 tau = m / gamma  # Momentum relaxation time.
 
 dt = 1e-12  # Time step [s].
