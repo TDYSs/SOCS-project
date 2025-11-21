@@ -1,5 +1,5 @@
 from scipy import constants
 
-viscosity = 
+viscosity = 1
 kB = constants.Boltzmann
 
