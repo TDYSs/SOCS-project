@@ -1,69 +1,80 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from forces import binding_force, spring_force
+from forces import evolution_viscous
 
-def evolution_viscous(x0, gamma, dt, duration):
-    """
-    Function to generate the solution for the Langevin equation with 
-    inertia.
-    
-    Parameters
-    ==========
-    x0 : Initial position of the oscillator [m].
-    gamma : Friction coefficient [N*s/m].    
-    dt : Time step for the numerical solution [s].
-    duration : Total time for which the solution is computed [s].
-    """
-    
-    kBT = 4.11e-21  # kB*T at room temperature [J].
-    
-    D = kBT / gamma  # Diffusion constant [m^2 / s].
-    
-    # Coefficients for the finite difference solution.
-    c_noise = np.sqrt(2 * D * dt)
-
-    N = int(np.ceil(duration / dt))  # Number of time steps.
-
-    x = np.zeros(N)
-    rn = np.random.normal(0, 1, N - 1)
-    
-    x[0] = x0
-
-    for i in range(N - 1):
-        f = spring_force(x[i]) + binding_force(x[i])
-        x[i + 1] = x[i] + c_noise * rn[i] + f*dt/gamma
-    return x, D
-
-# Simulation for a colloidal particle in water at room temperature.
-
+dt = 1e-12
+duration = 10e-6
 R = 1e-9  # Radius of the Brownian particle [m].
 eta = 1e-3  # Viscosity of the medium.
 gamma = 6 * np.pi * R * eta  # Drag coefficient of the medium. 
-rho = 2.e+3  # Density of the particle [kg/m^3]
-m = 4 * np.pi / 3 * rho * R ** 3  # Mass of the particle [kg].
 
 
-tau = m / gamma  # Momentum relaxation time.
+class Head:
+    def __init__(self, nucleotide_state, attached, start_position):
+        self.nucleotide_state = nucleotide_state  # 'ADP', 'ATP', or 'nucleotide-free'
+        self.attached = attached  # True if attached to microtubule, False otherwise
+        self.position = start_position * 8e-9
+    def bind_ATP(self):
+        if self.nucleotide_state == 'free':
+            self.nucleotide_state = 'ATP'
+    def release_ADP(self):
+        if self.nucleotide_state == 'ADP':
+            self.nucleotide_state = 'free'
+    def ATP_to_ADP(self):
+        if self.nucleotide_state == 'ATP':
+            self.nucleotide_state = 'ADP'
+            self.attached = False
+    def move(self):
+        iterations = evolution_viscous(0, gamma, dt, duration)[1]
+        self.position += 16e-9
+        return iterations
+    def attach(self):
+        self.attached = True
 
-dt = 1e-12  # Time step [s].
-duration = 10e-6  # Total time [s].
+
+def evolution(head_front, head_back, ATP_concentration):
+    time = 0
+    while ATP_concentration >= 1:
+        print (ATP_concentration)
+        if head_front.nucleotide_state == 'free' and head_back.nucleotide_state == 'ADP':
+            running = True
+            k_ATP = 100
+            wait_time = np.random.exponential(1/k_ATP)
+            time += wait_time
+            head_front.bind_ATP()
+            print (ATP_concentration)
+
+            iterations = head_back.move()
+            time += dt*iterations
+            head_front, head_back = head_back, head_front
+
+            head_front.release_ADP()
+
+            head_back.ATP_to_ADP()
+
+            head_front.attach()
+
+            ATP_concentration -= 1
+    return time, head_front.position
+
+head_front = Head('free', True, 1)
+head_back = Head('ADP', False, 0)
 
 
+#print(f'tau={tau:.3e} s.') 
 
-x0 = 0  # Initial position [m].
-v0 = 0  # Initial velocity [m/s].
+time, position = evolution(head_front, head_back, 50)
+print (time, position)
+print (position*1e9/time)
+#x_visc, D_v = evolution_viscous(x0, gamma, dt, duration)
 
-print(f'tau={tau:.3e} s.') 
+#t = dt * np.arange(int(np.ceil(duration / dt)))
 
-x_visc, D_v = evolution_viscous(x0, gamma, dt, duration)
+#plt.plot(x_visc, '-', color='b', linewidth=0.5)
 
-t = dt * np.arange(int(np.ceil(duration / dt)))
+#plt.title('Trajectories')
 
-plt.plot(t / tau, x_visc, '-', color='b', linewidth=0.5)
+#plt.xlabel('t')
+#plt.ylabel('x (m)')
 
-plt.title('Trajectories')
-
-plt.xlabel('t (tau)')
-plt.ylabel('x (m)')
-
-plt.show()
+#plt.show()
