@@ -1,23 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-def spring_force(x):
-    k = 0.0002
-    y = x-8e-9
-    return -y*k
-
-def binding_force(x):
-    kBT = 4.11e-21
-    sigma = 1e-9/2
-    xpos = 16e-9
-    x = x- xpos
-    U = 16*kBT
-    return -U*x/(sigma**2)*np.exp(-x**2/ (2*sigma**2))
-
-x_grid = np.linspace(-5*1e-9/2, 50*1e-9/2, 500)
-
-plt.plot(x_grid, binding_force(x_grid)+spring_force(x_grid))
-plt.show()
+from forces import binding_force, spring_force
 
 def evolution_viscous(x0, gamma, dt, duration):
     """
@@ -49,7 +32,6 @@ def evolution_viscous(x0, gamma, dt, duration):
     for i in range(N - 1):
         f = spring_force(x[i]) + binding_force(x[i])
         x[i + 1] = x[i] + c_noise * rn[i] + f*dt/gamma
-
     return x, D
 
 # Simulation for a colloidal particle in water at room temperature.
@@ -64,7 +46,7 @@ m = 4 * np.pi / 3 * rho * R ** 3  # Mass of the particle [kg].
 tau = m / gamma  # Momentum relaxation time.
 
 dt = 1e-12  # Time step [s].
-duration = 20e-6  # Total time [s].
+duration = 10e-6  # Total time [s].
 
 
 
@@ -77,10 +59,7 @@ x_visc, D_v = evolution_viscous(x0, gamma, dt, duration)
 
 t = dt * np.arange(int(np.ceil(duration / dt)))
 
-plt.plot(t / tau, x_visc, '-', color='b', linewidth=0.5, label='viscous')
-
-
-plt.legend()
+plt.plot(t / tau, x_visc, '-', color='b', linewidth=0.5)
 
 plt.title('Trajectories')
 
