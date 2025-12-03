@@ -7,7 +7,6 @@ gamma = 6 * np.pi * R * eta  # Drag coefficient of the medium.
 rho = 2e3  # Density of the particle [kg/m^3]
 m = 4 * np.pi / 3 * rho * R ** 3  # Mass of the particle [kg].
 
-
 tau = m / gamma  # Momentum relaxation time.
 
 dt = 1e-12  # Time step [s].
@@ -68,6 +67,7 @@ def evolution_viscous(x0, gamma, dt, duration):
 
     stable_steps_required = int(stable_time / dt)
     stable_counter = 0
+    
     for i in range(N - 1):
         f = spring_force(x[i]) + binding_force(x[i])
         x[i + 1] = x[i] + c_noise * rn[i] + f*dt/gamma

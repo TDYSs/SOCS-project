@@ -42,7 +42,6 @@ def evolution(head_front, head_back, ATP_concentration):
             wait_time = np.random.exponential(1/k_ATP)
             time += wait_time
             head_front.bind_ATP()
-            print (ATP_concentration)
 
             iterations = head_back.move()
             time += dt*iterations
